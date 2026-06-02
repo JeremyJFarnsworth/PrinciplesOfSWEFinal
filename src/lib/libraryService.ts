@@ -9,6 +9,7 @@ import {
   NewBookInput,
   NotFoundError,
   Rating,
+  ValidationError,
 } from "./types";
 
 /** Maximum number of books allowed in the `reading` status at the same time. */
@@ -89,6 +90,49 @@ export function changeStatus(id: string, to: BookStatus): Book {
   book.status = to;
   writeAll(books);
   return book;
+}
+
+/**
+ * Updates a book's editable details (title and/or author). Trims and validates
+ * any provided field; status and rating have their own dedicated operations.
+ */
+export function updateBookDetails(
+  id: string,
+  fields: { title?: string; author?: string },
+): Book {
+  const books = readAll();
+  const book = books.find((b) => b.id === id);
+  if (!book) {
+    throw new NotFoundError();
+  }
+
+  if (fields.title !== undefined) {
+    const title = fields.title.trim();
+    if (title.length === 0) {
+      throw new ValidationError("Title is required");
+    }
+    book.title = title;
+  }
+  if (fields.author !== undefined) {
+    const author = fields.author.trim();
+    if (author.length === 0) {
+      throw new ValidationError("Author is required");
+    }
+    book.author = author;
+  }
+
+  writeAll(books);
+  return book;
+}
+
+/** Deletes a book by id. Throws NotFoundError when it does not exist. */
+export function deleteBook(id: string): void {
+  const books = readAll();
+  const next = books.filter((b) => b.id !== id);
+  if (next.length === books.length) {
+    throw new NotFoundError();
+  }
+  writeAll(next);
 }
 
 /** Sets (or clears) the rating on a book. Pass undefined to clear it. */

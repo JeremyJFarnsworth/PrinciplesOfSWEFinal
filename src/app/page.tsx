@@ -32,6 +32,9 @@ export default function HomePage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"" | BookStatus>("");
   const [error, setError] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editAuthor, setEditAuthor] = useState("");
 
   const load = useCallback(async () => {
     const params = new URLSearchParams();
@@ -77,6 +80,22 @@ export default function HomePage() {
         body: JSON.stringify(body),
       }),
     );
+  }
+
+  async function remove(id: string) {
+    await handle(fetch(`/api/books/${id}`, { method: "DELETE" }));
+  }
+
+  async function saveEdit(id: string) {
+    await patch(id, { title: editTitle, author: editAuthor });
+    setEditingId(null);
+  }
+
+  function startEdit(book: Book) {
+    setEditingId(book.id);
+    setEditTitle(book.title);
+    setEditAuthor(book.author);
+    setError(null);
   }
 
   return (
@@ -140,34 +159,75 @@ export default function HomePage() {
               marginBottom: 8,
             }}
           >
-            <strong>{book.title}</strong> — {book.author}
-            <div style={{ fontSize: 14, color: "#555", margin: "4px 0" }}>
-              {STATUS_LABEL[book.status]}
-              {book.rating ? ` · ${"★".repeat(book.rating)}` : ""}
-            </div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {NEXT_STATUSES[book.status].map((next) => (
-                <button key={next} onClick={() => patch(book.id, { status: next })}>
-                  → {STATUS_LABEL[next]}
-                </button>
-              ))}
-              <select
-                aria-label={`Rate ${book.title}`}
-                value={book.rating ?? ""}
-                onChange={(e) =>
-                  patch(book.id, {
-                    rating: e.target.value ? Number(e.target.value) : null,
-                  })
-                }
+            {editingId === book.id ? (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void saveEdit(book.id);
+                }}
+                style={{ display: "flex", gap: 6, flexWrap: "wrap" }}
               >
-                <option value="">Rate…</option>
-                {[1, 2, 3, 4, 5].map((r) => (
-                  <option key={r} value={r}>
-                    {r} ★
-                  </option>
-                ))}
-              </select>
-            </div>
+                <input
+                  aria-label="Edit title"
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                  required
+                  style={{ flex: 1, padding: 6 }}
+                />
+                <input
+                  aria-label="Edit author"
+                  value={editAuthor}
+                  onChange={(e) => setEditAuthor(e.target.value)}
+                  required
+                  style={{ flex: 1, padding: 6 }}
+                />
+                <button type="submit">Save</button>
+                <button type="button" onClick={() => setEditingId(null)}>
+                  Cancel
+                </button>
+              </form>
+            ) : (
+              <>
+                <strong>{book.title}</strong> — {book.author}
+                <div style={{ fontSize: 14, color: "#555", margin: "4px 0" }}>
+                  {STATUS_LABEL[book.status]}
+                  {book.rating ? ` · ${"★".repeat(book.rating)}` : ""}
+                </div>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {NEXT_STATUSES[book.status].map((next) => (
+                    <button
+                      key={next}
+                      onClick={() => patch(book.id, { status: next })}
+                    >
+                      → {STATUS_LABEL[next]}
+                    </button>
+                  ))}
+                  <select
+                    aria-label={`Rate ${book.title}`}
+                    value={book.rating ?? ""}
+                    onChange={(e) =>
+                      patch(book.id, {
+                        rating: e.target.value ? Number(e.target.value) : null,
+                      })
+                    }
+                  >
+                    <option value="">Rate…</option>
+                    {[1, 2, 3, 4, 5].map((r) => (
+                      <option key={r} value={r}>
+                        {r} ★
+                      </option>
+                    ))}
+                  </select>
+                  <button onClick={() => startEdit(book)}>Edit</button>
+                  <button
+                    onClick={() => remove(book.id)}
+                    style={{ color: "#b00020" }}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </>
+            )}
           </li>
         ))}
         {books.length === 0 && <li>No books found.</li>}

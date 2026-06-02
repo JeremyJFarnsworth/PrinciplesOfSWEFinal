@@ -10,6 +10,12 @@
     "id": "b9dbb8ac-10bd-4992-a47f-b3a89eea8f94",
     "title": "Name of the Wind",
     "author": "Patrick Rothfuss",
-    "status": "want_to_read"
+    "status": "finished"
+  },
+  {
+    "id": "d91d3dd6-4068-4cee-884e-3aaa98264260",
+    "title": "Test Book",
+    "author": "Test Author",
+    "status": "reading"
   }
 ]

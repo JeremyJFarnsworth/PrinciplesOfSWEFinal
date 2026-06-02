@@ -77,4 +77,4 @@ Run with `npm test`. The suite covers the required categories:
 | Boundary (rating 1–5 edges) | [\_\_tests\_\_/validation.test.ts](__tests__/validation.test.ts) |
 | Boundary (3-reading limit) | [\_\_tests\_\_/concurrentReads.test.ts](__tests__/concurrentReads.test.ts) |
 | Integration (service + state machine + repository + file) | [\_\_tests\_\_/service.integration.test.ts](__tests__/service.integration.test.ts) |
-| System / E2E (API → service → repository → JSON file) | [\_\_tests\_\_/api.e2e.test.ts](__tests__/api.e2e.test.ts) |
+| System / E2E (API → service → repository → JSON file, incl. edit + delete) | [\_\_tests\_\_/api.e2e.test.ts](__tests__/api.e2e.test.ts) |

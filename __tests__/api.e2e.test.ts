@@ -4,7 +4,10 @@ import path from "path";
 import { randomUUID } from "crypto";
 import { NextRequest } from "next/server";
 import { GET as listBooks, POST as createBook } from "@/app/api/books/route";
-import { PATCH as patchBook } from "@/app/api/books/[id]/route";
+import {
+  DELETE as deleteBookRoute,
+  PATCH as patchBook,
+} from "@/app/api/books/[id]/route";
 // (handlers under test import their error mapper from @/lib/apiError)
 import { Book } from "@/lib/types";
 
@@ -106,5 +109,38 @@ describe("books API end-to-end", () => {
       { params: { id: created.id } },
     );
     expect(badRes.status).toBe(400);
+  });
+
+  test("edits a book's details then deletes it, persisted to disk", async () => {
+    const created = (await (
+      await createBook(
+        jsonRequest("http://test/api/books", "POST", {
+          title: "Untitled",
+          author: "Anon",
+        }),
+      )
+    ).json()) as Book;
+    const ctx = { params: { id: created.id } };
+
+    // Edit title + author via PATCH.
+    await patchBook(
+      jsonRequest(`http://test/api/books/${created.id}`, "PATCH", {
+        title: "Mistborn",
+        author: "Brandon Sanderson",
+      }),
+      ctx,
+    );
+    expect(readFileBooks()[0]).toMatchObject({
+      title: "Mistborn",
+      author: "Brandon Sanderson",
+    });
+
+    // Delete via DELETE.
+    const delRes = deleteBookRoute(
+      jsonRequest(`http://test/api/books/${created.id}`, "DELETE"),
+      ctx,
+    );
+    expect(delRes.status).toBe(204);
+    expect(readFileBooks()).toHaveLength(0);
   });
 });
